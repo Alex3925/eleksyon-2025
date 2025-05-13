@@ -6,7 +6,7 @@ async function fetchResults() {
     if (!response.ok) throw new Error('Failed to fetch results');
     const data = await response.json();
     
-    // HASH GENERATOR - ALEX
+    // Hash to detect changes
     const currentHash = JSON.stringify(data);
     const syncStatus = document.getElementById('sync-status');
     
@@ -30,22 +30,24 @@ async function fetchResults() {
 }
 
 function updateResults(data, searchTerm = '') {
-  // Senatorial table
+  // Helper to filter by search term
+  const filterData = (items, keys) => items.filter(item =>
+    keys.some(key => item[key]?.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  // Senatorial
   const senatorialTable = document.querySelector('#senatorial-table tbody');
   senatorialTable.innerHTML = '';
   if (data.senatorial) {
-    const filteredSenatorial = data.senatorial.filter(candidate =>
-      candidate.candidate.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      candidate.party.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    if (filteredSenatorial.length > 0) {
-      filteredSenatorial.forEach(candidate => {
+    const filtered = filterData(data.senatorial, ['candidate', 'party']);
+    if (filtered.length > 0) {
+      filtered.forEach(item => {
         senatorialTable.innerHTML += `
           <tr>
-            <td>${candidate.candidate || 'N/A'}</td>
-            <td>${candidate.party || 'N/A'}</td>
-            <td>${(candidate.votes || 0).toLocaleString()}</td>
-            <td>${candidate.percentage ? candidate.percentage.toFixed(2) : '0.00'}%</td>
+            <td>${item.candidate || 'N/A'}</td>
+            <td>${item.party || 'N/A'}</td>
+            <td>${(item.votes || 0).toLocaleString()}</td>
+            <td>${item.percentage ? item.percentage.toFixed(2) : '0.00'}%</td>
           </tr>`;
       });
     } else {
@@ -55,20 +57,18 @@ function updateResults(data, searchTerm = '') {
     senatorialTable.innerHTML = '<tr><td colspan="4">No senatorial data available</td></tr>';
   }
 
-  // Party-list table
+  // Party-List
   const partyListTable = document.querySelector('#party-list-table tbody');
   partyListTable.innerHTML = '';
   if (data.partyList) {
-    const filteredPartyList = data.partyList.filter(party =>
-      party.party.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    if (filteredPartyList.length > 0) {
-      filteredPartyList.forEach(party => {
+    const filtered = filterData(data.partyList, ['party']);
+    if (filtered.length > 0) {
+      filtered.forEach(item => {
         partyListTable.innerHTML += `
           <tr>
-            <td>${party.party || 'N/A'}</td>
-            <td>${(party.votes || 0).toLocaleString()}</td>
-            <td>${party.percentage ? party.percentage.toFixed(2) : '0.00'}%</td>
+            <td>${item.party || 'N/A'}</td>
+            <td>${(item.votes || 0).toLocaleString()}</td>
+            <td>${item.percentage ? item.percentage.toFixed(2) : '0.00'}%</td>
           </tr>`;
       });
     } else {
@@ -77,9 +77,75 @@ function updateResults(data, searchTerm = '') {
   } else {
     partyListTable.innerHTML = '<tr><td colspan="3">No party-list data available</td></tr>';
   }
+
+  // Congressional
+  const congressionalTable = document.querySelector('#congressional-table tbody');
+  congressionalTable.innerHTML = '';
+  if (data.congressional) {
+    const filtered = filterData(data.congressional, ['district', 'candidate', 'party']);
+    if (filtered.length > 0) {
+      filtered.forEach(item => {
+        congressionalTable.innerHTML += `
+          <tr>
+            <td>${item.district || 'N/A'}</td>
+            <td>${item.candidate || 'N/A'}</td>
+            <td>${item.party || 'N/A'}</td>
+            <td>${(item.votes || 0).toLocaleString()}</td>
+          </tr>`;
+      });
+    } else {
+      congressionalTable.innerHTML = '<tr><td colspan="4">No matching congressional results</td></tr>';
+    }
+  } else {
+    congressionalTable.innerHTML = '<tr><td colspan="4">No congressional data available</td></tr>';
+  }
+
+  // Gubernatorial
+  const gubernatorialTable = document.querySelector('#gubernatorial-table tbody');
+  gubernatorialTable.innerHTML = '';
+  if (data.gubernatorial) {
+    const filtered = filterData(data.gubernatorial, ['province', 'candidate', 'party']);
+    if (filtered.length > 0) {
+      filtered.forEach(item => {
+        gubernatorialTable.innerHTML += `
+          <tr>
+            <td>${item.province || 'N/A'}</td>
+            <td>${item.candidate || 'N/A'}</td>
+            <td>${item.party || 'N/A'}</td>
+            <td>${(item.votes || 0).toLocaleString()}</td>
+          </tr>`;
+      });
+    } else {
+      gubernatorialTable.innerHTML = '<tr><td colspan="4">No matching gubernatorial results</td></tr>';
+    }
+  } else {
+    gubernatorialTable.innerHTML = '<tr><td colspan="4">No gubernatorial data available</td></tr>';
+  }
+
+  // Mayoral
+  const mayoralTable = document.querySelector('#mayoral-table tbody');
+  mayoralTable.innerHTML = '';
+  if (data.mayoral) {
+    const filtered = filterData(data.mayoral, ['city', 'candidate', 'party']);
+    if (filtered.length > 0) {
+      filtered.forEach(item => {
+        mayoralTable.innerHTML += `
+          <tr>
+            <td>${item.city || 'N/A'}</td>
+            <td>${item.candidate || 'N/A'}</td>
+            <td>${item.party || 'N/A'}</td>
+            <td>${(item.votes || 0).toLocaleString()}</td>
+          </tr>`;
+      });
+    } else {
+      mayoralTable.innerHTML = '<tr><td colspan="4">No matching mayoral results</td></tr>';
+    }
+  } else {
+    mayoralTable.innerHTML = '<tr><td colspan="4">No mayoral data available</td></tr>';
+  }
 }
 
-// Search bar functionality
+// Search bar
 document.getElementById('search-bar').addEventListener('input', async (e) => {
   const searchTerm = e.target.value.trim();
   try {
